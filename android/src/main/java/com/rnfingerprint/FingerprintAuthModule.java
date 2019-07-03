@@ -20,6 +20,7 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
 
     private static final String FRAGMENT_TAG = "fingerprint_dialog";
 
+    private FingerprintDialog fingerprintDialog;
     private KeyguardManager keyguardManager;
     private boolean isAppActive;
 
@@ -28,6 +29,7 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
     public FingerprintAuthModule(final ReactApplicationContext reactContext) {
         super(reactContext);
 
+        fingerprintDialog = new FingerprintDialog();
         reactContext.addLifecycleEventListener(this);
     }
 
@@ -72,6 +74,12 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
     @ReactMethod
     public void authenticate(final String reason, final ReadableMap authConfig, final Callback reactErrorCallback, final Callback reactSuccessCallback) {
         final Activity activity = getCurrentActivity();
+
+        if (inProgress && fingerprintDialog != null && activity != null) {
+            fingerprintDialog.show(activity.getFragmentManager(), FRAGMENT_TAG);
+            return;
+        }
+
         if (inProgress || !isAppActive || activity == null) {
             return;
         }
@@ -99,7 +107,6 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
 
         final DialogResultHandler drh = new DialogResultHandler(reactErrorCallback, reactSuccessCallback);
 
-        final FingerprintDialog fingerprintDialog = new FingerprintDialog();
         fingerprintDialog.setCryptoObject(cryptoObject);
         fingerprintDialog.setReasonForAuthentication(reason);
         fingerprintDialog.setAuthConfig(authConfig);
